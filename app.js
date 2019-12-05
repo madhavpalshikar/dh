@@ -25,10 +25,10 @@ getKarma = (authorLink)=>{
       if(res.length > 0 && res != null){
         let raw = res.replace(/>\s+</g,'><').replace(/(\r\n|\n|\r)/gm,'').replace('              ','').replace('          ','');
         let karma = raw.match(/karma:<\/td><td>(.*?)<\/td>/g);
-        return karma[0].replace('karma:</td><td>','').replace('</td>','')
+        resolve(karma[0].replace('karma:</td><td>','').replace('</td>',''));
       }
       else{
-        return 'Blank Page';
+        resolve('Blank Page');
       }
     }); 
   })
@@ -78,15 +78,20 @@ getData(url)
     console.log(news)
       let i = 0;
       //site has some limit, it does not respond to too many requests quickly
-      waitloop = ()=>{
-        getKarma(news[i].authorLink)
-        setTimeout(()=>{
-          i++;
-          if(i < news.length){
-            waitloop();
-          }
-        },1000);
-      }
-      waitloop();
-      console.log(news);
-  });
+      return new Promise((resolve,reject)=>{
+        waitloop = ()=>{
+          getKarma(news[i].authorLink).then(l => news[i].karma = l);
+          setTimeout(()=>{
+            i++;
+            if(i < news.length){
+              waitloop();
+            }
+            else{
+              resolve(news);
+            }
+          },1000);
+        }
+        waitloop();
+      });
+  })
+  .then(final=>console.log(final));
